@@ -4,14 +4,14 @@ import java.util.Stack;
 import java.util.Random;
 import java.util.Arrays;
 
-class MazeGenerator {
+public class MazeGenerator {
     
     private Stack<Node> stack = new Stack<>();
     private Random rand = new Random();
     private int[][] maze;
     private int dimension;
 
-    MazeGenerator(int dim) {
+    public MazeGenerator(int dim) {
         maze = new int[dim][dim];
         dimension = dim;
     }
@@ -36,11 +36,15 @@ class MazeGenerator {
         return sb.toString();
     }
 
+    public int[][] getMaze(){
+        return maze;
+    }
+
     public String getSymbolicMaze() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < dimension; i++) {
             for (int j = 0; j < dimension; j++) {
-                sb.append(maze[i][j] == 1 ? "*" : " ");
+                sb.append(maze[i][j] == 1 ? " " : "*");
                 sb.append("  "); 
             }
             sb.append("\n");
