@@ -5,6 +5,8 @@ import java.awt.event.KeyEvent;
 
 import com.anish.calabashbros.BubbleSorter;
 import com.anish.calabashbros.Calabash;
+import com.anish.calabashbros.QuickSorter;
+import com.anish.calabashbros.SelectSorter;
 import com.anish.calabashbros.World;
 
 import asciiPanel.AsciiPanel;
@@ -20,11 +22,19 @@ public class WorldScreen implements Screen {
 
         bros = world.getBros();
 
-        BubbleSorter<Calabash> b = new BubbleSorter<>();
-        b.load(bros);
-        b.sort();
+        // BubbleSorter<Calabash> b = new BubbleSorter<>();
+        // b.load(bros);
+        // b.sort();
+        
+        // SelectSorter<Calabash> s = new SelectSorter<>();
+        // s.load(bros);
+        // s.sort();
 
-        sortSteps = this.parsePlan(b.getPlan());
+        QuickSorter<Calabash> q = new QuickSorter<>();
+        q.load(bros);
+        q.sort();
+
+        sortSteps = this.parsePlan(q.getPlan());
     }
 
     private String[] parsePlan(String plan) {

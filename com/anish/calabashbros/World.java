@@ -4,15 +4,17 @@ import java.util.Random;
 
 public class World {
 
-    public static final int WIDTH = 40;
-    public static final int HEIGHT = 20;
+    public static final int WIDTH = 60;
+    public static final int HEIGHT = 40;
     private Calabash[] bros;
 
     private Tile<Thing>[][] tiles;
 
+    private final String imgpath = "./resources/c256.png";
+
     private class Matrix {
-        final int row = 8;
-        final int column = 8;
+        final int row = 16;
+        final int column = 16;
 
         // Matrix(int row, int column){
         //     this.column = column;
@@ -55,10 +57,10 @@ public class World {
 
     private void putBros(){
         if(bros == null) return;
-        int startx = (WIDTH - matrix.column)/2;
-        int starty = (HEIGHT - matrix.row)/2;
+        int startx = (WIDTH - matrix.column * 2)/2;
+        int starty = (HEIGHT - matrix.row * 2)/2;
         for(int i = 0; i<bros.length; ++i){
-            this.put(bros[i],startx + i%matrix.column,starty + i/matrix.column);
+            this.put(bros[i],startx + i%matrix.column * 2,starty + i/matrix.column * 2);
         }
     }
 
@@ -66,8 +68,11 @@ public class World {
         if(bros != null) return;
         int nums = matrix.row*matrix.column;
         bros = new Calabash[nums];
+
+        Color[] colors = ReadColor.getColor(imgpath);
+
         for(int i = 0; i<nums; ++i){
-            bros[i] = new Calabash(new Color(255, i*4, 0), i, this);
+            bros[i] = new Calabash(colors[i], i, this);
         }
     }
 
