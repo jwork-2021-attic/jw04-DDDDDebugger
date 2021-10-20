@@ -1,121 +1,119 @@
 package com.world;
 
-import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
+import com.asciiPanel.AsciiPanel;
+import com.mazegenerator.MazeGenerator;
 
-/*
- * Copyright (C) 2015 Aeranythe Echosong
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- */
-/**
- *
- * @author Aeranythe Echosong
- */
 public class World {
 
-    private Tile[][] tiles;
-    private int width;
-    private int height;
-    private List<Creature> creatures;
+    public static final int WIDTH = 50;
+    public static final int HEIGHT = 50;
 
-    public static final int TILE_TYPES = 2;
+    private Tile<Thing>[][] tiles;
 
-    public World(Tile[][] tiles) {
-        this.tiles = tiles;
-        this.width = tiles.length;
-        this.height = tiles[0].length;
-        this.creatures = new ArrayList<>();
-    }
+    private int [][]maze;
+    private Player player;
+    private Thing destination;
+    public boolean win = false;
 
-    public Tile tile(int x, int y) {
-        if (x < 0 || x >= width || y < 0 || y >= height) {
-            return Tile.BOUNDS;
-        } else {
-            return tiles[x][y];
+    public World() {
+
+        if (tiles == null) {
+            tiles = new Tile[WIDTH][HEIGHT];
         }
-    }
 
-    public char glyph(int x, int y) {
-        return tiles[x][y].glyph();
-    }
-
-    public Color color(int x, int y) {
-        return tiles[x][y].color();
-    }
-
-    public int width() {
-        return width;
-    }
-
-    public int height() {
-        return height;
-    }
-
-    public void dig(int x, int y) {
-        if (tile(x, y).isDiggable()) {
-            tiles[x][y] = Tile.FLOOR;
-        }
-    }
-
-    public void addAtEmptyLocation(Creature creature) {
-        int x;
-        int y;
-
-        do {
-            x = (int) (Math.random() * this.width);
-            y = (int) (Math.random() * this.height);
-        } while (!tile(x, y).isGround() || this.creature(x, y) != null);
-
-        creature.setX(x);
-        creature.setY(y);
-
-        this.creatures.add(creature);
-    }
-
-    public void addPlayer(Creature creature){
-        if(tile(0,0).isGround()){
-            creature.setX(0);
-            creature.setY(0);
-            this.creatures.add(creature);
-        }
-    }
-
-    public Creature creature(int x, int y) {
-        for (Creature c : this.creatures) {
-            if (c.x() == x && c.y() == y) {
-                return c;
+        
+        do{
+            MazeGenerator mazeGenerator = new MazeGenerator(WIDTH);
+            mazeGenerator.generateMaze();
+            maze = mazeGenerator.getMaze();
+        }while(maze[HEIGHT-1][WIDTH-1]==0);
+        
+        //System.out.println(mazeGenerator.getRawMaze());
+        for (int i = 0; i < WIDTH; i++) {
+            for (int j = 0; j < HEIGHT; j++) {
+                tiles[i][j] = new Tile<>(i, j);
+                switch(maze[j][i]){
+                    case 0:
+                        tiles[i][j].setThing(new Wall(this));
+                        break;
+                    case 1:
+                        tiles[i][j].setThing(new Floor(this));
+                        break;
+                    default: break;                 
+                }               
             }
         }
-        return null;
+
+        player = new Player(AsciiPanel.brightRed, this);
+        this.put(player, 0, 0);
+        //System.out.println(player.getPath(maze));
+
+        destination = new Thing(AsciiPanel.brightGreen, (char)15, this);
+        if(maze[HEIGHT-1][WIDTH-1]==1) this.put(destination, WIDTH - 1, HEIGHT - 1);
+        
     }
 
-    public List<Creature> getCreatures() {
-        return this.creatures;
+    public Thing get(int x, int y) {
+        return this.tiles[x][y].getThing();
     }
 
-    public void remove(Creature target) {
-        this.creatures.remove(target);
+    public void put(Thing t, int x, int y) {
+        this.tiles[x][y].setThing(t);
     }
 
-    public void update() {
-        ArrayList<Creature> toUpdate = new ArrayList<>(this.creatures);
-
-        for (Creature creature : toUpdate) {
-            creature.update();
+    public void movePlayer(Direction dir){
+        int[] xy = dir.getDisplacement();
+        int newX = player.getX() + xy[0];
+        int newY = player.getY() + xy[1];
+        if(newX < 0 || newX >= WIDTH
+            ||newY < 0 || newY >= HEIGHT
+            ||maze[newY][newX] == 0
+        ) return;
+        else {
+            put(new Track(this), player.getX(), player.getY());
+            put(player, newX, newY);
+            if(newX == destination.getX() && newY == destination.getY()){
+                win = true;
+            }
         }
+    }
+
+    public void autoMovePlayer(){
+        String steps = player.getPath(maze);
+        
+        if(steps.charAt(0) == 'U'){
+            movePlayer(Direction.UP);
+        }else if(steps.charAt(0) == 'D'){
+            movePlayer(Direction.DOWN);
+        }else if(steps.charAt(0) == 'L'){
+            movePlayer(Direction.LEFT);
+        }else if(steps.charAt(0) == 'R'){
+            movePlayer(Direction.RIGHT);
+        }
+        
+        return;
+        
+    }
+
+    public void showAnswer(){
+        String steps = player.getPath(maze);
+        int x = player.getX();
+        int y = player.getY();
+        for(int i = 0; i < steps.length(); ++i){
+            if(steps.charAt(i) == 'U'){               
+                put(new Arrow(this, Direction.UP), x, y);
+                y += -1;
+            }else if(steps.charAt(i) == 'D'){              
+                put(new Arrow(this, Direction.DOWN), x, y);
+                y += 1;
+            }else if(steps.charAt(i) == 'L'){              
+                put(new Arrow(this, Direction.LEFT), x, y);
+                x += -1;
+            }else if(steps.charAt(i) == 'R'){              
+                put(new Arrow(this, Direction.RIGHT), x, y);
+                x += 1;
+            }
+        }
+        put(player, player.getX(), player.getY());
     }
 }
